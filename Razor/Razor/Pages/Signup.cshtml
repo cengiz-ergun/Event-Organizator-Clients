@@ -1,0 +1,39 @@
+﻿@page
+@model Razor.Pages.SignupModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+}
+
+<form method="post" class="row g-3 d-flex flex-column align-items-center">
+    <div class="col-md-6 text-center">
+        <h1 class="form-label">Signup</h1>
+    </div>
+    <div class="col-md-6">
+        <label for="first-name" class="form-label">First name</label>
+        <input asp-for="signupViewModel.FirstName" class="form-control" id="first-name">
+        <span asp-validation-for="signupViewModel.FirstName" class="text-danger font-weight-bold"></span>
+    </div>
+    <div class="col-md-6">
+        <label for="last-name" class="form-label">Last name</label>
+        <input asp-for="signupViewModel.LastName" class="form-control" id="last-name">
+        <span asp-validation-for="signupViewModel.LastName" class="text-danger font-weight-bold"></span>
+    </div>
+    <div class="col-md-6">
+        <label for="e-mail" class="form-label">E-Mail</label>
+        <input asp-for="signupViewModel.Email" class="form-control" id="e-mail">
+        <span asp-validation-for="signupViewModel.Email" class="text-danger font-weight-bold"></span>
+    </div>
+    <div class="col-md-6">
+        <label for="password" class="form-label">Password</label>
+        <input asp-for="signupViewModel.Password" class="form-control" id="password">
+        <span asp-validation-for="signupViewModel.Password" class="text-danger font-weight-bold"></span>
+    </div>
+    <div class="col-md-6">
+        <label for="password-confirm" class="form-label">Confirm Password</label>
+        <input asp-for="signupViewModel.ConfirmPassword" class="form-control" id="password-confirm">
+        <span asp-validation-for="signupViewModel.ConfirmPassword" class="text-danger font-weight-bold"></span>
+    </div>
+    <div class="col-md-6 text-center mt-xl-5">
+        <button class="btn btn-primary" type="submit">Submit form</button>
+    </div>
+</form>
