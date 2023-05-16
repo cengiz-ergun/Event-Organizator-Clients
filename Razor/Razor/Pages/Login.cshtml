@@ -1,11 +1,13 @@
 ﻿@page
 @model Razor.Pages.LoginModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
+    ViewData["Title"] = "Log in";
 }
 
 <form method="post" class="row g-3 d-flex flex-column align-items-center">
     <div class="col-md-6 text-center">
-        <h1 class="form-label">Login</h1>
+        <h1 class="form-label">Log in</h1>
     </div>
     <div class="col-md-6">
         <label for="e-mail" class="form-label">E-Mail</label>
@@ -21,3 +23,17 @@
         <button class="btn btn-primary" type="submit">Log in</button>
     </div>
 </form>
+
+
+@section Scripts {
+        @if (TempData["Message"] != null)
+        {
+            <script>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    html: '@TempData["Message"]'
+                })
+            </script>
+        }
+}

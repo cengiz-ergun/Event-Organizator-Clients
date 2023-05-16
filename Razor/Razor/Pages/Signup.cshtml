@@ -2,11 +2,12 @@
 @model Razor.Pages.SignupModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
+    ViewData["Title"] = "Sign up";
 }
 
 <form method="post" class="row g-3 d-flex flex-column align-items-center">
     <div class="col-md-6 text-center">
-        <h1 class="form-label">Signup</h1>
+        <h1 class="form-label">Sign up</h1>
     </div>
     <div class="col-md-6">
         <label for="first-name" class="form-label">First name</label>
@@ -34,6 +35,35 @@
         <span asp-validation-for="signupViewModel.ConfirmPassword" class="text-danger font-weight-bold"></span>
     </div>
     <div class="col-md-6 text-center mt-xl-5">
-        <button class="btn btn-primary" type="submit">Sign Up</button>
+        <button class="btn btn-primary" type="submit">Sign up</button>
     </div>
 </form>
+
+@*@section Scripts {
+    <script>
+        $(document).ready(function () { $("input").attr("autocomplete", "off"); });
+    </script>
+    @if (TempData["Message"] != null)
+    {
+        <script>
+            $(document).ready(function () {
+
+                alert('@TempData["Message"]');
+
+            });
+        </script>
+    }
+}*@
+
+@section Scripts {
+    @if (TempData["Message"] != null)
+    {
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                html: '@TempData["Message"]'
+            })
+        </script>
+    }
+}

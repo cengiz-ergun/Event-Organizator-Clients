@@ -1,5 +1,9 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Newtonsoft.Json;
+using Razor.DTOs.ResponseModels;
+using Razor.Services;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
@@ -7,6 +11,12 @@ namespace Razor.Pages
 {
     public class SignupModel : PageModel
     {
+        private readonly CrudService _crudService;
+
+        public SignupModel(CrudService crudService)
+        {
+            _crudService = crudService;
+        }
         public async Task<IActionResult> OnGet()
         {
             return Page();
@@ -22,9 +32,36 @@ namespace Razor.Pages
                 return Page();
             }
 
-            //call api appplication
+            // call api appplication
+            HttpResponseMessage httpResponseMessage = await _crudService.SignUpUser(signupViewModel);
+            var content = await httpResponseMessage.Content.ReadAsStringAsync();
+            if (!httpResponseMessage.IsSuccessStatusCode)
+            {
+                string tempDataMessage = null;
+                switch (httpResponseMessage.StatusCode)
+                {
+                    case System.Net.HttpStatusCode.UnprocessableEntity:
+                        UnprocessableEntityResponseModel unprocessableEntityResponseModel = JsonConvert.DeserializeObject<UnprocessableEntityResponseModel>(content);
+                        string message = string.Join("\n", unprocessableEntityResponseModel.Errors);
+                        tempDataMessage = message;
+                        break;
+                    default:
+                        break;
+                }
 
-            return RedirectToPage("./Index");
+                if (tempDataMessage == null)
+                {
+                    throw new NotImplementedException();
+                }
+                TempData["Message"] = tempDataMessage;
+                return Page();
+            }
+
+            httpResponseMessage.EnsureSuccessStatusCode();
+            
+            // redirect to login page - loading icon
+
+            return RedirectToPage("./Login");
         }
     }
 
