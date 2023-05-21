@@ -32,7 +32,6 @@ namespace Razor.Pages
                 return Page();
             }
 
-            // call api appplication
             HttpResponseMessage httpResponseMessage = await _crudService.SignUpUser(signupViewModel);
             var content = await httpResponseMessage.Content.ReadAsStringAsync();
             if (!httpResponseMessage.IsSuccessStatusCode)
@@ -41,8 +40,8 @@ namespace Razor.Pages
                 switch (httpResponseMessage.StatusCode)
                 {
                     case System.Net.HttpStatusCode.UnprocessableEntity:
-                        UnprocessableEntityResponseModel unprocessableEntityResponseModel = JsonConvert.DeserializeObject<UnprocessableEntityResponseModel>(content);
-                        string message = string.Join("\n", unprocessableEntityResponseModel.Errors);
+                        ErrorResponseModel errorResponseModel = JsonConvert.DeserializeObject<ErrorResponseModel>(content);
+                        string message = string.Join("\n", errorResponseModel.Errors);
                         tempDataMessage = message;
                         break;
                     default:

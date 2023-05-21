@@ -39,22 +39,6 @@
     </div>
 </form>
 
-@*@section Scripts {
-    <script>
-        $(document).ready(function () { $("input").attr("autocomplete", "off"); });
-    </script>
-    @if (TempData["Message"] != null)
-    {
-        <script>
-            $(document).ready(function () {
-
-                alert('@TempData["Message"]');
-
-            });
-        </script>
-    }
-}*@
-
 @section Scripts {
     @if (TempData["Message"] != null)
     {

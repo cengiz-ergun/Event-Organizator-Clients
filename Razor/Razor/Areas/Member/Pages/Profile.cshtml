@@ -1,0 +1,149 @@
+﻿@page
+@using Microsoft.Extensions.Configuration
+@model Razor.Areas.Member.Pages.ProfileModel
+@inject IConfiguration configuration
+@inject Razor.Services.Abstracts.ICurrentUserService currentUserService
+@{
+    var token = "Bearer " + currentUserService.GetToken();
+    var baseUri = configuration["Server:Uri"];
+    Console.WriteLine(  );
+}
+
+
+<h1 class="my-3">Profile</h1>
+<hr>
+@foreach (var property in ViewData.ModelMetadata.Properties[0].Properties)
+{
+    <div class="row justify-content-md-start py-3">
+        <div class="col col-lg-2">
+            @Html.Label(property.GetDisplayName())
+        </div>
+        <div class="col col-lg-2">
+            <input value="@(property.PropertyGetter(Model.profileViewModel))" disabled />
+        </div>
+    </div>
+}
+<div class="row justify-content-md-start py-3">
+    <div class="col col-lg-2">
+        Password
+    </div>
+    <div class="col col-lg-2">
+        <input class="" type="password" value="akhsdka" disabled/>
+    </div>
+</div>
+
+<button type="button" class="btn btn-primary my-3" data-bs-toggle="modal" data-bs-target="#passwordChange">Change My Password</button>
+
+<div class="modal fade" id="passwordChange" tabindex="-1" aria-labelledby="passwordChangeLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5">Change My Password</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="old-password" class="col-form-label">Old Password:</label>
+                        <input type="password" class="form-control" id="old-password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-password" class="col-form-label">New Password:</label>
+                        <input type="password" class="form-control" id="new-password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-password-again" class="col-form-label">New Password Again:</label>
+                        <input type="password" class="form-control" id="new-password-again">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button id="password-change-caller" type="button" class="btn btn-primary">Ok</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="spinner-div" class="pt-5">
+    <div class="spinner-border text-primary" role="status">
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#passwordChange').on('hidden.bs.modal', function () {
+                $('#old-password').val('');
+                $('#new-password').val('');
+                $('#new-password-again').val('');
+            })
+            $("#password-change-caller").click(function () {
+                //alert("button");
+                var oldPassword = $("#old-password").val();
+                var newPassword = $("#new-password").val();
+                var newPasswordAgain = $("#new-password-again").val();
+                if ((oldPassword == "") || (newPassword == "") || (newPasswordAgain == "")) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'Password can not be empty!'
+                    })
+                    return false;
+                }
+                if (newPassword != newPasswordAgain) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: 'New Passwords should be same!'
+                    })
+                    return false;
+                }
+                if (newPassword == oldPassword) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Oops...',
+                        text: "New and old passwords can not be same!"
+                    })
+                    return false;
+                }
+                $('#spinner-div').show();
+                var body = {
+                    'OldPassword': oldPassword,
+                    'NewPassword': newPassword
+                };
+                $.ajax({
+                    url: `@baseUri/api/member/update`,
+                    type: "PUT",
+                    headers: { "Authorization": "@token" },
+                    data: JSON.stringify(body),
+                    dataType: 'json',
+                    contentType: "application/json"
+                })
+                    .always(function (data) {
+                        $('#spinner-div').hide();
+                        if(data != undefined){
+                            var statusCode = data.status;
+                            var responseJson = data.responseJSON;
+                            responseText = responseJson.errors.join("<br>")
+                            Swal.fire({
+                                icon: 'error',
+                                title: "Status Code: " + statusCode,
+                                html: responseText
+                            })
+                        }else{
+                            Swal.fire({
+                                icon: 'success',
+                                title: "Status Code: " + 204,
+                                text: "Your password has been changed succesfully."
+                            })
+                            $('#passwordChange').modal('hide');
+                            $('#old-password').val('');
+                            $('#new-password').val('');
+                            $('#new-password-again').val('');
+                        }                  
+                    });
+            });
+        });
+    </script>
+}

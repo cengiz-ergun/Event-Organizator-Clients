@@ -6,5 +6,6 @@
         string GetLastName();
         string GetEmail();
         string GetRole();
+        string GetToken();
     }
 }

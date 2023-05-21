@@ -13,17 +13,38 @@ namespace Razor.Services
         }
         public string GetEmail()
         {
-            throw new NotImplementedException();
+            if (_httpContextAccessor.HttpContext.User.Claims.Any())
+            {
+                return _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == "email").Value;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public string GetFirstName()
         {
-            throw new NotImplementedException();
+            if (_httpContextAccessor.HttpContext.User.Claims.Any())
+            {
+                return _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == "firstname").Value;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public string GetLastName()
         {
-            throw new NotImplementedException();
+            if (_httpContextAccessor.HttpContext.User.Claims.Any())
+            {
+                return _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == "lastname").Value;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public string GetRole()
@@ -31,6 +52,19 @@ namespace Razor.Services
             if (_httpContextAccessor.HttpContext.User.Claims.Any())
             {
                 return _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role").Value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public string GetToken()
+        {
+            //HttpContext.Request.Cookies["token"];
+            if (_httpContextAccessor.HttpContext.Request.Cookies["token"] != null)
+            {
+                return _httpContextAccessor.HttpContext.Request.Cookies["token"];
             }
             else
             {

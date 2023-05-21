@@ -1,6 +1,6 @@
 ﻿namespace Razor.DTOs.ResponseModels
 {
-    public class UnprocessableEntityResponseModel
+    public class ErrorResponseModel
     {
         public List<string> Errors { get; set; }
     }

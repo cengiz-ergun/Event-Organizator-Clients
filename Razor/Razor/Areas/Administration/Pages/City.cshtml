@@ -1,0 +1,149 @@
+﻿@page
+@using Newtonsoft.Json;
+@using System.Net.Http;
+@using Razor.DTOs.ResponseModels;
+@using Microsoft.Extensions.Configuration
+@model Razor.Areas.Administration.Pages.CityModel
+@inject IConfiguration configuration
+@inject Razor.Services.CrudService crudService
+@inject Razor.Services.Abstracts.ICurrentUserService currentUserService
+@{
+    ViewData["Title"] = "City";
+
+    var baseUri = configuration["Server:Uri"];
+    var token = "Bearer " + currentUserService.GetToken();
+
+    HttpResponseMessage httpResponseMessage = await crudService.GetCities(token);
+    if (!httpResponseMessage.IsSuccessStatusCode)
+    {
+        throw new Exception();
+    }
+    httpResponseMessage.EnsureSuccessStatusCode();
+    var content = await httpResponseMessage.Content.ReadAsStringAsync();
+
+    OkResponseModel<CityResponseModel> cityReturnModels = JsonConvert.DeserializeObject<OkResponseModel<CityResponseModel>>(content);
+    Console.WriteLine(  );
+}
+
+<h1>Cities</h1>
+<hr>
+
+<button type="button" class="btn btn-success d-block my-4" onclick="addHandle()">Add New City</button>
+
+<div id="city-container">
+    @if (cityReturnModels.Data.Count != 0)
+    {
+        @foreach (var item in cityReturnModels.Data)
+        {
+            <span data-closable-id=@item.Id class="closable-tag">
+                <span>@item.Name</span>
+                <button type="button" class="btn-close" aria-label="Close" onclick="removeHandle(this)"></button>
+            </span>
+        }
+    }
+</div>
+
+<p style="display: none" id="isThereAnyCity">There is not any city yet..</p>
+
+@section Scripts {
+    <script>
+        function updateMessageShowOrOff() {
+            var count = $("span[data-closable-id]").length;
+            if (count == 0) {
+                $('#isThereAnyCity').css('display', 'block');
+            } else {
+                $('#isThereAnyCity').css('display', 'none');
+            }
+            return
+        }
+        updateMessageShowOrOff()
+        function removeHandle(param) {
+            let id = param.parentNode.getAttributeNode("data-closable-id").value;
+            let value = param.parentNode.firstElementChild.textContent;
+            Swal.fire({
+                title: 'Do you wanna remove ' + value,
+                inputAttributes: {
+                    autocapitalize: 'off'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                showLoaderOnConfirm: true,
+                preConfirm: () => $.ajax({
+                    url: `@baseUri/api/city/${id}`,
+                    type: "DELETE",
+                    headers: { "Authorization": "@token" },
+                    dataType: 'json',
+                    contentType: "application/json"
+                })
+                    .always(function (data) {
+                        if (data != undefined) {
+                            var statusCode = data.status;
+                            var responseJson = data.responseJSON;
+                            responseText = responseJson.errors.join("<br>")
+                            Swal.fire({
+                                icon: 'error',
+                                title: "Status Code: " + statusCode,
+                                html: responseText
+                            })
+                        } else {
+                            Swal.fire({
+                                icon: 'success',
+                                title: "Status Code: " + 204,
+                                text: `City ${value} has been deleted succesfully.`
+                            })
+                            param.parentNode.remove();
+                            updateMessageShowOrOff()
+                        }
+
+                    })
+            })
+        }
+        function addHandle() {
+            Swal.fire({
+                title: 'Enter new city',
+                input: 'text',
+                inputAttributes: {
+                    autocapitalize: 'off'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Ok',
+                showLoaderOnConfirm: true,
+                preConfirm: (login) => $.ajax({
+                    url: "@baseUri/api/city",
+                    type: "POST",
+                    headers: { "Authorization": "@token" },
+                    data: JSON.stringify({ 'name': login }),
+                    dataType: 'json',
+                    contentType: "application/json"
+                })
+                    .always(function (data, jqXHR) {
+                        if(jqXHR == "success"){
+                            Swal.fire({
+                                icon: 'success',
+                                title: "Status Code: " + 201,
+                            text: `City ${data["data"][0]['name']} added succesfully.`
+                            })
+                            var cityContainer = document.getElementById('city-container');
+                            cityContainer.insertAdjacentHTML('beforeend', `
+                                            <span data-closable-id=${data["data"][0]['id']} class="closable-tag">
+                                                        <span>${data["data"][0]['name']}</span>
+                                                <button type="button" class="btn-close" aria-label="Close" onclick="removeHandle(this)"></button>
+                                            </span>
+                                        `);
+                            updateMessageShowOrOff()
+                        }else{
+                            var statusCode = data.status;
+                            var responseJson = data.responseJSON;
+                            responseText = responseJson.errors.join("<br>")
+                            Swal.fire({
+                                icon: 'error',
+                                title: "Status Code: " + statusCode,
+                                html: responseText
+                            })
+                        }
+                    })
+            })
+        }
+    </script>
+}
+

@@ -44,19 +44,11 @@ namespace Razor.Pages
                 switch (httpResponseMessage.StatusCode)
                 {
                     case System.Net.HttpStatusCode.Unauthorized:
-                        UnauthorizedResponseModel unauthorizedResponseModel = JsonConvert.DeserializeObject<UnauthorizedResponseModel>(content);
-                        tempDataMessage = unauthorizedResponseModel.Message;
-                        break;
                     case System.Net.HttpStatusCode.UnprocessableEntity:
-                        UnprocessableEntityResponseModel unprocessableEntityResponseModel = JsonConvert.DeserializeObject<UnprocessableEntityResponseModel>(content);
-                        string message = string.Join("\n", unprocessableEntityResponseModel.Errors);
-                        tempDataMessage = message;
-                        break;
                     case System.Net.HttpStatusCode.NotFound:
-                        NotFoundResponseModel notFoundResponseModel = JsonConvert.DeserializeObject<NotFoundResponseModel>(content);
-                        tempDataMessage = notFoundResponseModel.Message;
-                        break;
-                    default:
+                        ErrorResponseModel errorResponseModel = JsonConvert.DeserializeObject<ErrorResponseModel>(content);
+                        string message = string.Join("\n", errorResponseModel.Errors);
+                        tempDataMessage = message;
                         break;
                 }
 
@@ -79,9 +71,15 @@ namespace Razor.Pages
             });
             var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token.AccessToken);
             string role = jwt.Claims.First(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role").Value;
+            string firstname = jwt.Claims.First(c => c.Type == "firstname").Value;
+            string lastname = jwt.Claims.First(c => c.Type == "lastname").Value;
+            string email = jwt.Claims.First(c => c.Type == "email").Value;
             var claims = new List<Claim>
                     {
-                        new Claim(ClaimTypes.Role, role)
+                        new Claim(ClaimTypes.Role, role),
+                        new Claim("firstname", firstname),
+                        new Claim("lastname", lastname),
+                        new Claim("email", email),
                     };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Razor.Clients;
 using Razor.Services;
 using Razor.Services.Abstracts;
 
@@ -28,7 +29,7 @@ builder.Services.AddRazorPages(options =>
 });
 
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<EventOrganizatorClient>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddTransient<CrudService>();
 
