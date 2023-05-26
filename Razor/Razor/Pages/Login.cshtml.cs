@@ -67,19 +67,21 @@ namespace Razor.Pages
 
             HttpContext.Response.Cookies.Append("token", token.AccessToken, new CookieOptions()
             {
-                Expires = DateTime.Now.AddDays(1)
+                Expires = DateTime.Now.AddDays(10)
             });
             var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token.AccessToken);
             string role = jwt.Claims.First(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role").Value;
             string firstname = jwt.Claims.First(c => c.Type == "firstname").Value;
             string lastname = jwt.Claims.First(c => c.Type == "lastname").Value;
             string email = jwt.Claims.First(c => c.Type == "email").Value;
+            string id = jwt.Claims.First(c => c.Type == "id").Value;
             var claims = new List<Claim>
                     {
                         new Claim(ClaimTypes.Role, role),
                         new Claim("firstname", firstname),
                         new Claim("lastname", lastname),
                         new Claim("email", email),
+                        new Claim("id", id),
                     };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

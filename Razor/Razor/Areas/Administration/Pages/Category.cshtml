@@ -22,7 +22,6 @@
     var content = await httpResponseMessage.Content.ReadAsStringAsync();
 
     OkResponseModel<CategoryResponseModel> categoryReturnModels = JsonConvert.DeserializeObject<OkResponseModel<CategoryResponseModel>>(content);
-    Console.WriteLine();
 }
 
 <h1>Categories</h1>

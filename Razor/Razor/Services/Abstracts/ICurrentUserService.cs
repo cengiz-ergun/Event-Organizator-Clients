@@ -7,5 +7,6 @@
         string GetEmail();
         string GetRole();
         string GetToken();
+        string GetId();
     }
 }

@@ -1,0 +1,282 @@
+﻿@page
+@using Microsoft.Extensions.Configuration
+@model Razor.Areas.Member.Pages.EventModel
+@inject IConfiguration configuration
+@inject Razor.Services.Abstracts.ICurrentUserService currentUserService
+@{
+    var token = "Bearer " + currentUserService.GetToken();
+    var currentId = currentUserService.GetId();
+    var baseUri = configuration["Server:Uri"];
+    Console.WriteLine();
+}
+
+<h1 class="my-3">Events</h1>
+<hr>
+
+@await  Component.InvokeAsync("Events")
+
+<div id="spinner-div" class="pt-5">
+    <div class="spinner-border text-primary" role="status">
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+        const headers = { 'Authorization': "@token" };
+        let categories;
+        let cities;
+        let selectedEventId;
+
+        async function getAllCategoriesAndCitiesForRadioButtons(){
+            categories = await fetch(`@baseUri/api/category`, { headers })
+                .then(response => response.json())
+                .then(data => data.data);
+            cities = await fetch(`@baseUri/api/city`, { headers })
+                .then(response => response.json())
+                .then(data => data.data);
+
+            $.each(categories, function (i, item) {
+                $('#categoryBox').append($('<option>', {
+                    text: item.name
+                }));
+            });
+            $.each(cities, function (i, item) {
+                $('#cityBox').append($('<option>', {
+                    text: item.name
+                }));
+            });
+
+        }
+        getAllCategoriesAndCitiesForRadioButtons();
+
+
+        //when close form modal, clear all input and HTMLTextAreaElement fields
+        $('#eventDetailModal').on('hidden.bs.modal', function (e) {
+            $(this)
+                .find("input,textarea,select")
+                .val('')
+                .end()
+                .find("input[type=checkbox], input[type=radio]")
+                .prop("checked", "")
+                .end();
+        })
+
+        //fill all input fields according to selected event
+        async function handleEventOpenModal(element) {
+            $('#spinner-div').show(); 
+            $("form").each(function () {
+                $(this).find(':input').prop("disabled", true);
+            });
+            async function FillFields(data) {
+                selectedEventId = data["id"]
+
+                document.getElementById("eventName").value = data["name"]
+                let categoryValue = await fetch(`@baseUri/api/category/${data["categoryId"]}`, { headers })
+                                                                            .then(response => response.json())
+                                                                            .then(data => data.data[0]["name"]);
+                //document.getElementById("eventCategory").value = categoryValue
+                document.getElementById("eventDetails").value = data["details"]
+                document.getElementById("eventAddress").value = data["address"]
+
+                let cityValue = await fetch(`@baseUri/api/city/${data["cityId"]}`, { headers })
+                                                                            .then(response => response.json())
+                                                                            .then(data => data.data[0]["name"]);
+                //document.getElementById("eventCity").value = cityValue
+
+                document.getElementById("numberOfPeople").value = data["numberOfPeople"]
+                document.getElementById("eventDate").value = data["date"]
+
+                // show/hide button or activate/disable input fields according to user and according to action(because modal will be change according to create or update action)
+                const isEventCreatedByActiveUser = data["createdByAppUserId"] == "@currentId"
+                document.getElementById("eventAddress").disabled = !isEventCreatedByActiveUser;
+                document.getElementById("numberOfPeople").disabled = !isEventCreatedByActiveUser;
+                updateButton.setAttribute("data-update-authority", isEventCreatedByActiveUser)
+                deleteButton.setAttribute("data-update-authority", isEventCreatedByActiveUser)
+                createButton.setAttribute("data-create", false)
+
+                $(document).ready(function () {
+                    $("#cityBox").val(cityValue);
+                    $("#categoryBox").val(categoryValue);
+                });
+            }
+
+            const eventId = element.parentNode.getAttribute("data-event-id")
+            //const headers = { 'Authorization': "token" };
+            await fetch(`@baseUri/api/event/${eventId}`, { headers })
+                       .then(response => response.json())
+                       .then(data => FillFields(data.data[0]));
+            $('#spinner-div').hide();
+        }
+
+        //after open modal, click update button
+        async function handleEventUpdate(){
+            const API_URL = '@baseUri'
+            const API_PATH = '/api/event'
+            $('#spinner-div').show();
+            await fetch(API_URL + API_PATH , {
+                headers: {
+                    'Authorization': "@token",
+                    'Content-Type': 'application/json'
+                },
+                method: 'PATCH',
+                body: JSON.stringify({ 
+                    "id": selectedEventId,
+                    "address": document.getElementById("eventAddress").value,
+                    "numberOfPeople": document.getElementById("numberOfPeople").value
+                })})
+                .then(async response => {
+                    if(response.ok){
+                        $('#spinner-div').hide()                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Good job!',
+                            text: 'You updated the event successfully.',
+                            confirmButtonText: 'Ok',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                location.reload()
+                            }
+                        })
+                    }else{
+                        $('#spinner-div').hide();
+                        var data = await response.json()
+                        responseText = data["errors"].join("<br>")
+                        Swal.fire({
+                            icon: 'error',
+                            title: "Status Code: " + response.status,
+                            html: responseText
+                        })
+                    }
+                })
+        }
+
+        //when click create event button
+        async function handleEventCreateModal(){
+            $("form").each(function () {
+                $(this).find(':input').prop("disabled", false);                
+            });
+            updateButton.setAttribute("data-update-authority", false)
+            deleteButton.setAttribute("data-update-authority", false)
+            createButton.setAttribute("data-create", true)
+        }
+
+        //after open modal, click createImageBitmap event button
+        async function handleEventCreate(){
+            const API_URL = '@baseUri'
+            const API_PATH = '/api/event'
+
+            if (document.getElementById("categoryBox").value == '') {
+                Swal.fire({
+                    icon: 'error',
+                    title: "Select a category."
+                })
+                return
+            } else if (document.getElementById("cityBox").value == ''){
+                Swal.fire({
+                    icon: 'error',
+                    title: "Select a city."
+                })
+                return
+            } else if (document.getElementById("eventDate").value == ''){
+                Swal.fire({
+                    icon: 'error',
+                    title: "Select a date"
+                })
+                return
+            }
+
+            var selectedCategoryId = categories.filter((c) => c["name"] == document.getElementById("categoryBox").value)[0]["id"]
+            var selectedCityId = cities.filter((c) => c["name"] == document.getElementById("cityBox").value)[0]["id"]
+
+            $('#spinner-div').show();
+            await fetch(API_URL + API_PATH, {
+                headers: {
+                    'Authorization': "@token",
+                    'Content-Type': 'application/json'
+                },
+                method: 'POST',
+                body: JSON.stringify({
+                    "name": document.getElementById("eventName").value,
+                    "categoryId": selectedCategoryId,
+                    "details": document.getElementById("eventDetails").value,
+                    "address": document.getElementById("eventAddress").value,
+                    "cityId": selectedCityId,
+                    "numberOfPeople": document.getElementById("numberOfPeople").value,
+                    "date": document.getElementById("eventDate").value
+                })
+            })
+            .then(async response => {
+                $('#spinner-div').hide()
+                var data = await response.json()
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Good job!',
+                        text: 'You created the event successfully.',
+                        confirmButtonText: 'Ok',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            location.reload()
+                            return
+                        }
+                    })
+                } else if (response.status == 400) {                    
+                    Swal.fire({
+                        icon: 'error',
+                        title: "Status Code: " + response.status,
+                        text: data.title
+                    })
+                    return
+                } else{ 
+                    responseText = data["errors"].join("<br>")
+                    Swal.fire({
+                        icon: 'error',
+                        title: "Status Code: " + response.status,
+                        html: responseText
+                    })
+                    return
+                }
+            })
+        }
+
+        async function handleEventCancel(){
+            const API_URL = '@baseUri'
+            const API_PATH = '/api/event/cancel'
+            $('#spinner-div').show();
+            await fetch(API_URL + API_PATH + `/${selectedEventId}`, {
+                headers: {
+                    'Authorization': "@token",
+                    'Content-Type': 'application/json'
+                },
+                method: 'PUT'
+            })
+            .then(async response => {
+                $('#spinner-div').hide();
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Good job!',
+                        text: 'You deleted the event successfully.',
+                        confirmButtonText: 'Ok',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            location.reload()
+                            return
+                        }
+                    })
+                }else{ 
+                    var data = await response.json()
+                    responseText = data["errors"].join("<br>")
+                    Swal.fire({
+                        icon: 'error',
+                        title: "Status Code: " + response.status,
+                        html: responseText
+                    })
+                    return
+                }
+            })
+        }
+    </script>
+}
+
+

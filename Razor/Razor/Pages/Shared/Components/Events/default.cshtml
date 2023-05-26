@@ -1,0 +1,79 @@
+﻿@model List<DTOs.ResponseModels.EventResponseModel>
+@using Newtonsoft.Json;
+@using Razor.DTOs.ResponseModels
+@using System.Net.Http;
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration configuration
+@inject Razor.Services.Abstracts.ICurrentUserService _currentUserService
+@inject Razor.Services.CrudService crudService
+@{
+}
+
+<button type="button" class="btn btn-primary btn-success mt-3 mb-5" data-bs-toggle="modal" data-bs-target="#eventDetailModal" onclick="handleEventCreateModal()">Create Event</button>
+
+<div class="row g-5">
+    @foreach (var eventResponseModel in Model)
+    {
+        <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 text-center">
+            <div data-event-id=@eventResponseModel.Id role="button" class="event-box border border-1 rounded-1 border-primary py-4 px-3 h-100 d-flex flex-column justify-content-between">
+                <h4>@eventResponseModel.Name.ToUpper()</h4>
+                <p>Date: @Convert.ToDateTime(eventResponseModel.Date).ToString("yyyy-MM-dd") </p>
+                <p>People limit: @eventResponseModel.NumberOfPeople</p>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#eventDetailModal" onclick="handleEventOpenModal(this)">Details</button>
+            </div>            
+        </div>   
+    }
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1" aria-labelledby="eventDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="eventName" class="form-label">Event Name</label>
+                        <input type="text" class="form-control" id="eventName" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventCategory" class="form-label">Event Category</label>
+                        <select id="categoryBox" class="form-select" aria-label="category" disabled>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="eventDetails" class="form-label">Event Details</label>
+                        <input type="text" class="form-control" id="eventDetails" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventAddress" class="form-label">Event Address</label>
+                        <textarea class="form-control" aria-label="With textarea" id="eventAddress" disabled></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventCity" class="form-label">Event City</label>
+                        <select id="cityBox" class="form-select" aria-label="city" disabled>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="numberOfPeople" class="form-label">Number Of People</label>
+                        <input type="number" class="form-control" id="numberOfPeople" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventDate" class="form-label">Event Date</label>
+                        <input type="date" class="form-control" id="eventDate" disabled>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button id="deleteButton" type="button" class="btn btn-danger" data-update-authority="false" onclick="handleEventCancel()">Cancel Event</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button id="updateButton" type="button" class="btn btn-primary" data-update-authority="false" onclick="handleEventUpdate()">Update</button>
+                <button id="createButton" type="button" class="btn btn-primary" data-create="false" onclick="handleEventCreate()">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+

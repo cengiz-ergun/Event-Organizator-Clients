@@ -35,6 +35,18 @@ namespace Razor.Services
             }
         }
 
+        public string GetId()
+        {
+            if (_httpContextAccessor.HttpContext.User.Claims.Any())
+            {
+                return _httpContextAccessor.HttpContext.User.Claims.First(c => c.Type == "id").Value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public string GetLastName()
         {
             if (_httpContextAccessor.HttpContext.User.Claims.Any())

@@ -69,5 +69,17 @@ namespace Razor.Services
 
             return response;
         }
+
+        public async Task<HttpResponseMessage> GetEvents(string accessToken)
+        {
+            _eventOrganizatorClient._httpClient.DefaultRequestHeaders.Add("Authorization", accessToken);
+
+            var request = new HttpRequestMessage(HttpMethod.Get, "api/event");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var response = await _eventOrganizatorClient._httpClient.SendAsync(request);
+
+            return response;
+        }
     }
 }
