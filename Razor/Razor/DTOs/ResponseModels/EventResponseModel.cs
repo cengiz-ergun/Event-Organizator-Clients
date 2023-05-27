@@ -8,9 +8,11 @@ namespace Razor.DTOs.ResponseModels
         public string Name { get; set; }
         public string Details { get; set; }
         public string Address { get; set; }
-        public EventStatus EventStatus { get; set; }
+        //public EventStatus EventStatus { get; set; }
+        public string EventStatus { get; set; }
         public int NumberOfPeople { get; set; }
-        public DateTime Date { get; set; }
+        //public DateTime Date { get; set; }
+        public string Date { get; set; }
         public DateTime CreatedDate { get; set; }
 
         public string CreatedByAppUserId { get; set; }

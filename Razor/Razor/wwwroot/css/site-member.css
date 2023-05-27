@@ -30,9 +30,34 @@ body {
 }
 
 /* event */
-.event-box:hover {
+/*.event-box:hover {
     background-color: #87CEEB;
+}*/
+
+div[data-color="Active"] {
+    background-color: #BFFFA6FF;
 }
+
+div[data-color="Active"]:hover {
+    background-color: #9DFF7DFF;
+}
+
+div[data-color="Canceled"] {
+    background-color: #FFB0A6FF;
+}
+
+div[data-color="Canceled"]:hover {
+    background-color: #FF988CFF;
+}
+
+div[data-color="Pending"] {
+    background-color: #FFF79CFF;
+}
+
+div[data-color="Pending"]:hover {
+    background-color: #FFE373FF;
+}
+
 
 *[data-update-authority="false"], *[data-create="false"] {
     display: none;

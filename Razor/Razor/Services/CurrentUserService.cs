@@ -1,11 +1,14 @@
 ﻿using Razor.Services.Abstracts;
 using System.Data;
+using System.Runtime.ConstrainedExecution;
 
 namespace Razor.Services
 {
     public class CurrentUserService : ICurrentUserService
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private static int _pagination;
+        private static int _currentPage;
 
         public CurrentUserService(IHttpContextAccessor httpContextAccessor)
         {
@@ -82,6 +85,25 @@ namespace Razor.Services
             {
                 return null;
             }
+        }
+
+        public void SetPagination(int pagination)
+        {
+            _pagination = pagination;
+        }
+        public int GetPagination()
+        {
+            return _pagination;
+        }
+
+        public void SetCurrentPage(int currentPage)
+        {
+            _currentPage = currentPage;
+        }
+
+        public int GetCurrentPage()
+        {
+            return _currentPage;
         }
     }
 }

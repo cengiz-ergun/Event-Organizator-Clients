@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Razor.Clients;
+using Razor.DTOs.RequestModels;
 using Razor.Pages;
+using System.IO;
 using System.Net.Http.Headers;
 
 namespace Razor.Services
@@ -76,6 +78,25 @@ namespace Razor.Services
 
             var request = new HttpRequestMessage(HttpMethod.Get, "api/event");
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var response = await _eventOrganizatorClient._httpClient.SendAsync(request);
+
+            return response;
+        }
+
+        public async Task<HttpResponseMessage> GetEventsWithQuery(string accessToken, Query query)
+        {
+            //GetAsync(path + "?" + query
+
+            //var serializedQuery = JsonConvert.SerializeObject(query);
+
+            _eventOrganizatorClient._httpClient.DefaultRequestHeaders.Add("Authorization", accessToken);
+
+            var request = new HttpRequestMessage(HttpMethod.Get, $"api/event?Page={query.Page}&Size={query.Size}");
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            //request.Content = new StringContent(serializedQuery);
+            //request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
             var response = await _eventOrganizatorClient._httpClient.SendAsync(request);
 

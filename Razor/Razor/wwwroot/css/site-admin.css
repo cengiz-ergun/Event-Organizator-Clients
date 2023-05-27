@@ -217,3 +217,11 @@ a.article:hover {
     padding: 10px 20px;
     border-radius: 8px;
 }
+
+button[data-pending="true"]{
+    display: block;
+}
+
+button[data-pending="false"] {
+    display: none;
+}

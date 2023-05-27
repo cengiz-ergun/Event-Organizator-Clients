@@ -29,12 +29,18 @@ builder.Services.AddRazorPages(options =>
     //options.Conventions.AllowAnonymousToFolder("/Private/PublicPages");
 });
 
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromMinutes(1);
+});
 
 builder.Services.AddHttpClient<EventOrganizatorClient>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddTransient<CrudService>();
 
 var app = builder.Build();
+
+app.UseSession();
+
 
 app.UseCors(builder => builder
          .AllowAnyHeader()
@@ -64,6 +70,7 @@ app.UseAuthorization();
 //    areaName: "Products",
 //    pattern: "Products/{controller=Home}/{action=Index}/{id?}");
 
+app.UseSession();
 app.MapRazorPages();
 
 app.Run();

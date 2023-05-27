@@ -15,7 +15,7 @@
     @foreach (var eventResponseModel in Model)
     {
         <div class="col-sm-12 col-md-6 col-lg-4 col-xl-3 text-center">
-            <div data-event-id=@eventResponseModel.Id role="button" class="event-box border border-1 rounded-1 border-primary py-4 px-3 h-100 d-flex flex-column justify-content-between">
+            <div data-event-id=@eventResponseModel.Id role="button" data-color=@eventResponseModel.EventStatus class="border border-1 rounded-1 border-primary py-4 px-3 h-100 d-flex flex-column justify-content-between">
                 <h4>@eventResponseModel.Name.ToUpper()</h4>
                 <p>Date: @Convert.ToDateTime(eventResponseModel.Date).ToString("yyyy-MM-dd") </p>
                 <p>People limit: @eventResponseModel.NumberOfPeople</p>

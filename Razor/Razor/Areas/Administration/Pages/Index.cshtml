@@ -1,9 +1,299 @@
 ﻿@page
 @model Razor.Areas.Administration.Pages.IndexModel
+@using Razor.DTOs.ResponseModels
+@using System.Net.Http;
+@using Microsoft.Extensions.Configuration
+@using Microsoft.AspNetCore.Http;
+@inject IConfiguration configuration
+@inject Razor.Services.Abstracts.ICurrentUserService currentUserService 
 @{
     ViewData["Title"] = "Main";
+    var token = "Bearer " + currentUserService.GetToken();
+    var baseUri = configuration["Server:Uri"];
+    int currentPage = currentUserService.GetCurrentPage();
+    var counter = (currentPage - 1) * 5;
 }
 
-<h1>
-    This is admin area.
-</h1>
+<h1 class="my-3">Events</h1>
+<hr>
+
+<form method="post" class="row g-3 d-flex flex-column align-items-center">
+    <nav aria-label="...">
+        <ul class="pagination">
+            @for (int i = 1; i < currentUserService.GetPagination() + 1; i++)
+            {
+                <li class="page-item">
+                    <button name="submit" type="submit" class="page-link" href="#" value=@i>@i</button>
+                </li>
+            }
+        </ul>
+    </nav>
+</form>
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Id</th>
+                <th scope="col">Event Name</th>
+                <th scope="col">Event Date</th>
+                <th scope="col">Event Status</th>
+                <th scope="col">Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (EventResponseModel eventResponseModel in Model.okResponseModel.Data.Take(5))
+            {
+                string variable;
+                counter += 1;
+                if (eventResponseModel.EventStatus == "Pending")
+                {
+                    variable = "table-warning";
+                }
+                else if (eventResponseModel.EventStatus == "Active")
+                {
+                    variable = "table-success";
+                }
+                else if (eventResponseModel.EventStatus == "Canceled")
+                {
+                    variable = "table-danger";
+                }
+                else
+                {
+                    variable = "table-light";
+                }
+                <tr class="@variable" data-current-id="@eventResponseModel.Id">
+                    <th scope="row">@counter</th>
+                    <td>@eventResponseModel.Id</td>
+                    <td>@eventResponseModel.Name</td>
+                    <td>@eventResponseModel.Date.ToString()</td>
+                    <td>@eventResponseModel.EventStatus</td>
+                    <td>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#eventDetailModal" onclick="openEventModalDetails(this)">Details</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div id="spinner-div" class="pt-5">
+    <div class="spinner-border text-primary" role="status">
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="eventDetailModal" tabindex="-1" aria-labelledby="eventDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="eventName" class="form-label">Event Name</label>
+                        <input type="text" class="form-control" id="eventName" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventCategory" class="form-label">Event Category</label>
+                        <select id="categoryBox" class="form-select" aria-label="category" disabled>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="eventDetails" class="form-label">Event Details</label>
+                        <input type="text" class="form-control" id="eventDetails" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventAddress" class="form-label">Event Address</label>
+                        <textarea class="form-control" aria-label="With textarea" id="eventAddress" disabled></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventCity" class="form-label">Event City</label>
+                        <select id="cityBox" class="form-select" aria-label="city" disabled>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="numberOfPeople" class="form-label">Number Of People</label>
+                        <input type="number" class="form-control" id="numberOfPeople" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="eventDate" class="form-label">Event Date</label>
+                        <input type="date" class="form-control" id="eventDate" disabled>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button id="cancelEventButton" type="button" class="btn btn-danger" onclick="handleCancelEvent()" data-pending>Cancel Event</button>
+                <button id="activeEventButton" type="button" class="btn btn-success" onclick="handleActiveEvent()" data-pending>Activate Event</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+        const headers = { 'Authorization': "@token" };
+        let categories;
+        let cities;
+        let selectedEventId;
+
+        async function getAllCategoriesAndCitiesForRadioButtons() {
+            categories = await fetch(`@baseUri/api/category`, { headers })
+                .then(response => response.json())
+                .then(data => data.data);
+            cities = await fetch(`@baseUri/api/city`, { headers })
+                .then(response => response.json())
+                .then(data => data.data);
+
+            $.each(categories, function (i, item) {
+                $('#categoryBox').append($('<option>', {
+                    text: item.name
+                }));
+            });
+            $.each(cities, function (i, item) {
+                $('#cityBox').append($('<option>', {
+                    text: item.name
+                }));
+            });
+
+        }
+        getAllCategoriesAndCitiesForRadioButtons();
+
+        async function openEventModalDetails(element){
+            selectedEventId = element.closest("tr").getAttribute("data-current-id")
+            $('#spinner-div').show();
+            async function FillFields(data) {
+                cancelEventButton.setAttribute("data-pending", data["eventStatus"] == "Pending")
+                activeEventButton.setAttribute("data-pending", data["eventStatus"] == "Pending")
+                document.getElementById("eventName").value = data["name"]
+                let categoryValue = await fetch(`@baseUri/api/category/${data["categoryId"]}`, { headers })
+                    .then(response => response.json())
+                    .then(data => data.data[0]["name"]);
+
+                document.getElementById("eventDetails").value = data["details"]
+                document.getElementById("eventAddress").value = data["address"]
+
+                let cityValue = await fetch(`@baseUri/api/city/${data["cityId"]}`, { headers })
+                    .then(response => response.json())
+                    .then(data => data.data[0]["name"]);
+
+                document.getElementById("numberOfPeople").value = data["numberOfPeople"]
+                document.getElementById("eventDate").value = data["date"]
+
+                $(document).ready(function () {
+                    $("#cityBox").val(cityValue);
+                    $("#categoryBox").val(categoryValue);
+                });
+            }
+
+            await fetch(`@baseUri/api/event/${selectedEventId}`, { headers })
+                .then(response => response.json())
+                .then(data => FillFields(data.data[0]));
+            $('#spinner-div').hide();
+        }
+
+        async function handleCancelEvent(){
+            const API_URL = '@baseUri'
+            const API_PATH = '/api/event'
+            Swal.fire({
+                icon: 'question',
+                title: 'Are you sure?',
+                text: 'If you click the button, you will cancel the event.',
+                confirmButtonText: 'Ok',
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    $('#spinner-div').show();
+                    await fetch(API_URL + API_PATH + `/${selectedEventId}`, {
+                        headers: {
+                            'Authorization': "@token",
+                            'Content-Type': 'application/json'
+                        },
+                        method: 'PATCH',
+                        body: JSON.stringify({
+                            "eventStatus": 3
+                        })
+                    })
+                        .then(async response => {
+                            if (response.ok) {
+                                $('#spinner-div').hide()
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Good job!',
+                                    text: 'You canceled the event successfully.',
+                                    confirmButtonText: 'Ok',
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        location.reload()
+                                    }
+                                })
+                            } else {
+                                $('#spinner-div').hide();
+                                var data = await response.json()
+                                responseText = data["errors"].join("<br>")
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: "Status Code: " + response.status,
+                                    html: responseText
+                                })
+                            }
+                        })
+                    return
+                }
+            })
+        }
+
+        async function handleActiveEvent() {
+            const API_URL = '@baseUri'
+            const API_PATH = '/api/event'
+            Swal.fire({
+                icon: 'question',
+                title: 'Are you sure?',
+                text: 'If you click the button, you will activate the event.',
+                confirmButtonText: 'Ok',
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    $('#spinner-div').show();
+                    await fetch(API_URL + API_PATH + `/${selectedEventId}`, {
+                        headers: {
+                            'Authorization': "@token",
+                            'Content-Type': 'application/json'
+                        },
+                        method: 'PATCH',
+                        body: JSON.stringify({
+                            "eventStatus": 1
+                        })
+                    })
+                        .then(async response => {
+                            if (response.ok) {
+                                $('#spinner-div').hide()
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Good job!',
+                                    text: 'You activate the event successfully.',
+                                    confirmButtonText: 'Ok',
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        location.reload()
+                                    }
+                                })
+                            } else {
+                                $('#spinner-div').hide();
+                                var data = await response.json()
+                                responseText = data["errors"].join("<br>")
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: "Status Code: " + response.status,
+                                    html: responseText
+                                })
+                            }
+                        })
+                    return
+                }
+            })
+        }
+    </script>
+}
